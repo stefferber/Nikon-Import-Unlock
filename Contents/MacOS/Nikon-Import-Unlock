@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Nikon-Import-Unlock
+# Version 1.0
+# If you protect images on your Nikon camera with the “Lock-Button” these images cannot edited once copied to your computer. This script is removing the file lock from all files in the sub-folder DCIM
+#  Created by @stefferber
+#  Copyright (c) 2026 dieferbers.de All Rights Reserved.
+
+#get only the first CF or SD card to process
+folder=$(ls /Volumes | grep "NIKON_" | head -1)
+
+SURETY="$(osascript -e "display dialog \"Unlock all files on CF/SD card in folder\n /Volumes/${folder}/DCIM\n Are you sure?\" buttons {\"Yes\", \"No\"} default button \"No\"")"
+
+if [ "$SURETY" = "button returned:Yes" ]; then
+    echo "Yes, unlocking..."    
+    # Count locked files before unlocking (via Finder — find -flags doesn't work on FAT/exFAT)
+    count=$(osascript -e "tell application \"Finder\" to return count of (every item of entire contents of folder \"DCIM\" of disk \"${folder}\" whose locked is true)")
+    # Unlock via Finder (bypasses app sandbox)
+    osascript -e "tell application \"Finder\" to set locked of entire contents of folder \"DCIM\" of disk \"${folder}\" to false"
+    osascript -e "display dialog \"Unlocked ${count} file(s) in /Volumes/${folder}/DCIM.\" buttons {\"OK\"} default button \"OK\" with title \"Nikon Import Unlock\""
+else
+    echo "No, cancel unlocking."    
+fi
+
+exit 0
